@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 
 class ContactController extends Controller
 {
-    public function index(Request $request)
+    public function index_old(Request $request)
     {
         $query = Contact::query()->where('is_merged', false);
 
@@ -26,11 +26,61 @@ class ContactController extends Controller
                 $query->where('gender', $request->gender);
             }
             // Optional: filter by custom fields
-            if ($request->filled('custom_field')) {
-                foreach ($request->custom_field as $fieldId => $value) {
-                    $query->whereHas('customFieldValues', function($q) use ($fieldId, $value) {
-                        $q->where('custom_field_id', $fieldId)->where('value', 'like', "%$value%");
-                    });
+            if ($request->ajax() && $request->has('filter_trigger')) {
+                // Apply filtering
+                if ($request->filled('custom_field')) {
+                    foreach ($request->custom_field as $fieldId => $value) {
+                        $query->whereHas('customFieldValues', function($q) use ($fieldId, $value) {
+                            $q->where('custom_field_id', $fieldId)->where('value', 'like', "%$value%");
+                        });
+                    }
+                }
+            }
+
+        }
+
+        $contacts = $query->with('customFieldValues.customField')->orderBy('id', 'desc')->paginate(10);
+
+        if ($request->ajax()) {
+            return view('contacts.partials.list', compact('contacts'))->render();
+        }
+
+        $customFields = CustomField::all();
+        return view('contacts.index', compact('contacts', 'customFields'));
+    }
+
+    public function index(Request $request)
+    {
+        $query = Contact::query()->where('is_merged', false);
+
+        // Apply filters only when the filter form is submitted
+        if ($request->ajax()) {
+            $hasStandardFilter = $request->filled('name') || $request->filled('email') || $request->filled('gender');
+            $hasCustomFieldFilter = $request->has('custom_field') && is_array($request->custom_field);
+
+            if ($hasStandardFilter || $hasCustomFieldFilter) {
+
+                // Standard filters
+                if ($request->filled('name')) {
+                    $query->where('name', 'like', '%' . $request->name . '%');
+                }
+                if ($request->filled('email')) {
+                    $query->where('email', 'like', '%' . $request->email . '%');
+                }
+                if ($request->filled('gender')) {
+                    $query->where('gender', $request->gender);
+                }
+
+                // Custom field filters
+                if ($hasCustomFieldFilter) {
+                    foreach ($request->custom_field as $fieldId => $value) {
+                        if (!empty($value)) {
+                            $query->whereHas('customFieldValues', function ($q) use ($fieldId, $value) {
+                                $q->where('custom_field_id', $fieldId)
+                                ->where('value', 'like', '%' . $value . '%');
+                            });
+                        }
+                    }
                 }
             }
         }

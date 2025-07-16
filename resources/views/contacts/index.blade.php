@@ -5,6 +5,8 @@
     <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addContactModal">Add Contact</button>
     <a href="{{ route('contacts.merge.form') }}" class="btn btn-warning">Merge Contacts</a>
     <form id="filterForm" class="row g-2 mt-3">
+        <input type="hidden" name="filter_trigger" value="1">
+
         <div class="col"><input type="text" name="name" class="form-control" placeholder="Name"></div>
         <div class="col"><input type="text" name="email" class="form-control" placeholder="Email"></div>
         <div class="col">

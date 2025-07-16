@@ -30,12 +30,22 @@
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
+        .container-nav {
+            background: #43587f !important;
+        }
         table th, table td {
             vertical-align: middle;
         }
         .navbar {
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
+        .navbar-dark .navbar-nav .nav-link {
+            color: #fff;
+        }
+        .navbar-dark .navbar-nav .nav-link:hover {
+            color: #ffd700; /* Optional: gold on hover */
+        }
+
     </style>
 
     <script>
@@ -48,19 +58,17 @@
     </script>
 
     <script>
-    window.csrfToken = "{{ csrf_token() }}";
-</script>
+        window.csrfToken = "{{ csrf_token() }}";
+    </script>
 
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-    <!-- Scripts (if needed, optional) -->
-    {{-- <script src="{{ asset('js/app.js') }}"></script> --}}
 </head>
 <body>
     <div id="app">
         <nav class="navbar navbar-expand-md navbar-dark bg-primary">
-            <div class="container">
+            <div class="container container-nav">
                 <a class="navbar-brand text-white" href="{{ url('/') }}">
                     {{ config('app.name', 'Laravel CRM') }}
                 </a>
@@ -83,13 +91,20 @@
                             @endif
                         @else
                             <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle text-white" href="#" role="button" data-bs-toggle="dropdown">
-                                    {{ Auth::user()->name }}
+                                <a id="navbarDropdown"
+                                    class="nav-link dropdown-toggle text-white"
+                                    href="#"
+                                    role="button"
+                                    data-bs-toggle="dropdown"
+                                    aria-haspopup="true"
+                                    aria-expanded="false">
+                                        {{ Auth::user()->name }}
                                 </a>
-                                <ul class="dropdown-menu dropdown-menu-end">
+
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
                                     <li>
                                         <a class="dropdown-item" href="{{ route('logout') }}"
-                                           onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                                        onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                                             Logout
                                         </a>
                                         <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
@@ -97,19 +112,23 @@
                                         </form>
                                     </li>
                                 </ul>
+
                             </li>
+
                         @endguest
                     </ul>
                 </div>
             </div>
         </nav>
 
+    
         <main class="container py-4">
+            <div id="alertMessage"></div>
             @yield('content')
         </main>
+
     </div>
 
-    <!-- Bootstrap JS CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
 </body>
 </html>
