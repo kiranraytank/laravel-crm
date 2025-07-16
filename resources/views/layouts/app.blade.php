@@ -53,7 +53,8 @@
             contactsStore: "{{ route('contacts.store') }}",
             contactsIndex: "{{ route('contacts.index') }}",
             mergeModal: "{{ route('contacts.merge.modal') }}",
-            mergeFinal: "{{ route('contacts.merge') }}"
+            mergeFinal: "{{ route('contacts.merge') }}",
+            mergePage: "{{ route('contacts.merge.form') }}" // ✅ Add this line
         };
     </script>
 

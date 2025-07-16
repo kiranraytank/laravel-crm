@@ -24,43 +24,52 @@ class ContactMergeController extends Controller
     public function merge(Request $request)
     {
         $request->validate([
-            'master_id' => 'required|exists:contacts,id',
-            'secondary_id' => 'required|exists:contacts,id|different:master_id',
+            'contact1_id' => 'required|exists:contacts,id',
+            'contact2_id' => 'required|exists:contacts,id|different:contact1_id',
+            'fields' => 'required|array',
         ]);
 
         DB::transaction(function() use ($request) {
-            $master = Contact::findOrFail($request->master_id);
-            $secondary = Contact::findOrFail($request->secondary_id);
+            $contact1 = Contact::findOrFail($request->contact1_id);
+            $contact2 = Contact::findOrFail($request->contact2_id);
 
-            $mergedData = [
-                'secondary_contact' => $secondary->toArray(),
-                'secondary_custom_fields' => $secondary->customFieldValues->toArray(),
-            ];
+            // Use the selected values for the master
+            $master = $contact1;
+            $secondary = $contact2;
+            // If user picked contact2's name, treat contact2 as master
+            if (
+                $request->fields['name'] === $contact2->name &&
+                $request->fields['email'] === $contact2->email &&
+                $request->fields['phone'] === $contact2->phone &&
+                $request->fields['gender'] === $contact2->gender
+            ) {
+                $master = $contact2;
+                $secondary = $contact1;
+            }
 
-            // Merge emails/phones if different
-            if ($master->email !== $secondary->email && $secondary->email) {
-                $master->email .= ', ' . $secondary->email;
-            }
-            if ($master->phone !== $secondary->phone && $secondary->phone) {
-                $master->phone .= ', ' . $secondary->phone;
-            }
+            $oldMasterData = $master->toArray();
+            $oldSecondaryData = $secondary->toArray();
+
+            // Update master with selected values
+            $master->name = $request->fields['name'];
+            $master->email = $request->fields['email'];
+            $master->phone = $request->fields['phone'];
+            $master->gender = $request->fields['gender'];
+            $master->save();
 
             // Merge custom fields
-            $masterFields = $master->customFieldValues->pluck('value', 'custom_field_id');
-            foreach ($secondary->customFieldValues as $secField) {
-                if (!$masterFields->has($secField->custom_field_id)) {
-                    // Master missing this field, add it
-                    ContactCustomFieldValue::create([
+            $customFields = $request->input('custom_fields', []);
+            foreach ($customFields as $cfid => $value) {
+                \App\Models\ContactCustomFieldValue::updateOrCreate(
+                    [
                         'contact_id' => $master->id,
-                        'custom_field_id' => $secField->custom_field_id,
-                        'value' => $secField->value,
-                    ]);
-                } else {
-                    // Both have, keep master's value (policy), but preserve secondary in merged_data
-                }
+                        'custom_field_id' => $cfid,
+                    ],
+                    [
+                        'value' => $value,
+                    ]
+                );
             }
-
-            $master->save();
 
             // Mark secondary as merged
             $secondary->is_merged = true;
@@ -71,7 +80,12 @@ class ContactMergeController extends Controller
             ContactMerge::create([
                 'master_contact_id' => $master->id,
                 'merged_contact_id' => $secondary->id,
-                'merged_data' => json_encode($mergedData),
+                'merged_data' => json_encode([
+                    'old_master' => $oldMasterData,
+                    'old_secondary' => $oldSecondaryData,
+                    'selected_fields' => $request->fields,
+                    'selected_custom_fields' => $customFields,
+                ]),
             ]);
         });
 

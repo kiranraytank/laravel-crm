@@ -1,5 +1,8 @@
-@extends('layouts.app')
-@section('content')
+{{-- REMOVE THIS LINE from views used in modals --}}
+{{-- @extends('layouts.app') --}}
+
+{{-- REMOVE @section('content') --}}
+
 <div class="container">
     <h2>Merge Contacts</h2>
     <form id="mergeForm">
@@ -25,4 +28,5 @@
     </form>
     <div id="mergeModalContainer"></div>
 </div>
-@endsection
+
+{{-- REMOVE @endsection --}}

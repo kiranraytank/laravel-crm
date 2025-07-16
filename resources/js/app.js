@@ -134,6 +134,58 @@ $(document).on('click', '[data-bs-target="#addContactModal"]', function(e) {
     });
 });
 
+// Open Merge Contacts modal from main page
+// Open Merge Contacts modal from main page
+// $(document).on('click', '#openMergePageBtn', function(e) {
+//     e.preventDefault();
+//     $.get('/contacts/merge', function(data) {
+//         // Create a modal container if not exists
+//         if ($('#mergePageModal').length === 0) {
+//             $('body').append('<div class="modal fade" id="mergePageModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content" id="mergePageModalContent"></div></div></div>');
+//         }
+        
+//         $('#mergePageModalContent').html(data); // Load entire Blade view (not just .container)
+//         const modal = new bootstrap.Modal(document.getElementById('mergePageModal'));
+//         modal.show();
+//     });
+// });
+
+// This is good and should stay:
+$(document).on('click', '#openMergePageBtn', function(e) {
+    e.preventDefault();
+    $.get('/contacts/merge', function(data) {
+        if ($('#mergePageModal').length === 0) {
+            $('body').append(`
+                <div class="modal fade" id="mergePageModal" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content" id="mergePageModalContent"></div>
+                    </div>
+                </div>
+            `);
+        }
+
+        // ✅ Inject entire form directly since layout was removed
+        $('#mergePageModalContent').html(data);
+
+        const modal = new bootstrap.Modal(document.getElementById('mergePageModal'));
+        modal.show();
+    });
+});
+
+
+
+$(document).on('click', '#openMergeModalBtn', function () {
+    $.post(window.laravelRoutes.mergeModal, $('#mergeForm').serialize(), function (data) {
+        $('#mergeModalContainer').html(data); // ✅ modal HTML injected
+
+        const modalElement = document.getElementById('mergeModal');
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+    });
+});
+
+
+
 
 function showAlert(type, message) {
     const alertHtml = `

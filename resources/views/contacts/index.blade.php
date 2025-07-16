@@ -3,7 +3,7 @@
 <div class="container">
     <h2>Contacts</h2>
     <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addContactModal">Add Contact</button>
-    <a href="{{ route('contacts.merge.form') }}" class="btn btn-warning">Merge Contacts</a>
+    <button class="btn btn-warning" id="openMergePageBtn">Merge Contacts</button>
     <form id="filterForm" class="row g-2 mt-3">
         <input type="hidden" name="filter_trigger" value="1">
 
