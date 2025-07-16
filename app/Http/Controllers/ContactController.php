@@ -196,4 +196,11 @@ class ContactController extends Controller
         $contact->load('customFieldValues.customField');
         return view('contacts.show', compact('contact'));
     }
+
+    public function mergedList()
+    {
+        $contacts = \App\Models\Contact::where('is_merged', true)->with('mergedFrom', 'merges')->get();
+        return view('contacts.partials.merged_list', compact('contacts'))->render();
+    }
+    
 }

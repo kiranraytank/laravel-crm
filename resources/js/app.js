@@ -184,6 +184,23 @@ $(document).on('click', '#openMergeModalBtn', function () {
     });
 });
 
+$(document).on('click', '#showMergedContactsBtn', function(e) {
+    e.preventDefault();
+    $.get('/contacts/merged-list', function(data) {
+        $('#mergedContactsModalContent').html(data);
+        const modal = new bootstrap.Modal(document.getElementById('mergedContactsModal'));
+        modal.show();
+    });
+});
+
+
+//  Reset the Filter and Reload Data
+$(document).on('click', '#resetFilterBtn', function () {
+    $('#filterForm')[0].reset(); // ✅ Actually clears all inputs
+    $('#filterForm input[name^="custom_field"]').val(''); // ✅ Clear custom field values
+    $('input[name="filter_trigger"]').val(''); // Optional: clear hidden flag
+    $('#filterForm').submit(); // ✅ Trigger AJAX reload with empty filters
+});
 
 
 

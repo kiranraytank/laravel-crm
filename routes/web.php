@@ -5,6 +5,7 @@ use App\Http\Controllers\ContactController;
 use App\Http\Controllers\CustomFieldController;
 use App\Http\Controllers\ContactMergeController;
 
+
 Auth::routes();
 
 Route::get('/', [ContactController::class, 'index'])->name('contacts.index');
@@ -26,6 +27,10 @@ Route::delete('custom-fields/{customField}', [CustomFieldController::class, 'des
 // 🟡 These should be below
 Route::post('contacts/{contact}/update', [ContactController::class, 'update'])->name('contacts.update');
 Route::delete('contacts/{contact}', [ContactController::class, 'destroy'])->name('contacts.destroy');
+
+Route::get('contacts/merged-list', [ContactController::class, 'mergedList'])->name('contacts.merged.list');
+
+Route::get('/contacts', [ContactController::class, 'index'])->name('contacts.index');
 
 // 🔴 LAST: Dynamic resource route (this is what was conflicting)
 Route::resource('contacts', ContactController::class)->except(['index']);

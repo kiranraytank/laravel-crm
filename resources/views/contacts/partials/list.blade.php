@@ -6,7 +6,7 @@
         </tr>
     </thead>
     <tbody>
-        @foreach($contacts as $contact)
+        @forelse($contacts as $contact)
         <tr @if($contact->is_merged) class="table-secondary" @endif>
             <td>{{ $contact->name }}</td>
             <td>{{ $contact->email }}</td>
@@ -17,7 +17,12 @@
                 <button class="btn btn-sm btn-danger deleteContactBtn" data-id="{{ $contact->id }}">Delete</button>
             </td>
         </tr>
-        @endforeach
+        @empty
+        <tr>
+            <td colspan="5" class="text-center text-muted">No data found</td>
+        </tr>
+        @endforelse
     </tbody>
 </table>
+
 {{ $contacts->links() }}
