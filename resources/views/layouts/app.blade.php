@@ -104,9 +104,11 @@
 
                                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
                                     @auth
-                                        <li>
-                                            <a class="dropdown-item" href="{{ route('custom_fields.index') }}">Manage Custom Fields</a>
-                                        </li>
+                                        @if(auth()->user()->isAdmin())
+                                            <li>
+                                                <a class="dropdown-item" href="{{ route('custom_fields.index') }}">Manage Custom Fields</a>
+                                            </li>
+                                        @endif
                                     @endauth
                                     <li>
                                         <a class="dropdown-item" href="{{ route('logout') }}"
