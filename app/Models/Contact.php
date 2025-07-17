@@ -6,8 +6,13 @@ use Illuminate\Database\Eloquent\Model;
 class Contact extends Model
 {
     protected $fillable = [
-        'name', 'email', 'phone', 'gender', 'profile_image', 'additional_file', 'is_merged', 'merged_into_id'
+        'name', 'email', 'phone', 'gender', 'profile_image', 'additional_file', 'is_merged', 'merged_into_id', 'user_id'
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(\App\Models\User::class);
+    }
 
     public function customFieldValues()
     {

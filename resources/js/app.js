@@ -37,12 +37,19 @@ $(document).on('submit', '#addContactForm', function(e) {
         contentType: false,
         success: function(resp) {
             // $('#addContactModal').modal('hide');
-             let modalElement = document.getElementById('addContactModal');
+            let modalElement = document.getElementById('addContactModal');
             let modalInstance = bootstrap.Modal.getInstance(modalElement);
             modalInstance.hide();
+
+            $('body').removeClass('modal-open'); // remove modal-open class from body
+            $('.modal-backdrop').remove();       // remove the dark background overlay
+
             $('#filterForm').submit();
             // alert(resp.message);
             showAlert('success', resp.message); // ✅ Success alert
+        },
+        error: function(error) {
+            console.error(error);
         }
     });
 });
@@ -106,22 +113,67 @@ $('#openMergeModalBtn').on('click', function() {
     });
 });
 
+// $(document).on('submit', '#finalMergeForm', function(e) {
+//     e.preventDefault();
+//     // $.post('{{ route("contacts.merge") }}', $(this).serialize(), function(resp) {
+//     $.post(window.laravelRoutes.mergeFinal, $(this).serialize(), function(resp) {
+//         if (resp.success) {
+//             // $('#mergeModal').modal('hide');
+//              let modalElement = document.getElementById('mergeModal');
+//             let modalInstance = bootstrap.Modal.getInstance(modalElement);
+//             modalInstance.hide();
+//             // alert(resp.message);
+//             showAlert('success', resp.message); // ✅ Success alert
+//             // window.location.href = '{{ route("contacts.index") }}';
+//             window.location.href = window.laravelRoutes.contactsIndex;
+//         }
+//     });
+// });
+
 $(document).on('submit', '#finalMergeForm', function(e) {
     e.preventDefault();
-    // $.post('{{ route("contacts.merge") }}', $(this).serialize(), function(resp) {
-    $.post(window.laravelRoutes.mergeFinal, $(this).serialize(), function(resp) {
-        if (resp.success) {
-            // $('#mergeModal').modal('hide');
-             let modalElement = document.getElementById('mergeModal');
-            let modalInstance = bootstrap.Modal.getInstance(modalElement);
-            modalInstance.hide();
-            // alert(resp.message);
-            showAlert('success', resp.message); // ✅ Success alert
-            // window.location.href = '{{ route("contacts.index") }}';
-            window.location.href = window.laravelRoutes.contactsIndex;
+    const form = $(this);
+    $.ajax({
+        url: window.laravelRoutes.mergeFinal,
+        method: 'POST',
+        data: form.serialize(),
+        success: function(resp) {
+            if (resp.success) {
+                let modalElement = document.getElementById('mergeModal');
+                let modalInstance = bootstrap.Modal.getInstance(modalElement);
+                modalInstance.hide();
+                showAlert('success', resp.message);
+                window.location.href = window.laravelRoutes.contactsIndex;
+            }
+        },
+        error: function(xhr) {
+            // Laravel sends validation errors with status 422
+            if (xhr.status === 422) {
+                const errors = xhr.responseJSON.errors;
+                let errorHtml = '<ul class="mb-0">';
+                $.each(errors, function(key, messages) {
+                    $.each(messages, function(_, msg) {
+                        errorHtml += `<li>${msg}</li>`;
+                    });
+                });
+                errorHtml += '</ul>';
+
+                // Append errors inside the modal alert container
+                const alertHtml = `
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        ${errorHtml}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>`;
+                
+                $('#mergeModal .modal-body').prepend(alertHtml);
+            } else {
+                console.error("Unexpected error:", xhr);
+                showAlert('danger', 'An unexpected error occurred.');
+            }
         }
     });
 });
+
 
 // Add Contact Modal: Load form via AJAX
 $(document).on('click', '[data-bs-target="#addContactModal"]', function(e) {
@@ -134,7 +186,6 @@ $(document).on('click', '[data-bs-target="#addContactModal"]', function(e) {
     });
 });
 
-// Open Merge Contacts modal from main page
 // Open Merge Contacts modal from main page
 // $(document).on('click', '#openMergePageBtn', function(e) {
 //     e.preventDefault();

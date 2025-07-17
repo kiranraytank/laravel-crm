@@ -10,7 +10,7 @@ class ContactMergeController extends Controller
 {
     public function showMergeForm(Request $request)
     {
-        $contacts = Contact::where('is_merged', false)->get();
+        $contacts = Contact::get();
         return view('contacts.merge', compact('contacts'));
     }
 

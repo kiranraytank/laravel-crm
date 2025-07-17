@@ -7,9 +7,15 @@ use App\Models\ContactCustomFieldValue;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class ContactController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
     public function index_old(Request $request)
     {
         $query = Contact::query()->where('is_merged', false);
@@ -51,7 +57,8 @@ class ContactController extends Controller
 
     public function index(Request $request)
     {
-        $query = Contact::query()->where('is_merged', false);
+        // $query = Contact::query()->where('is_merged', false);
+        $query = Contact::query();
 
         // Apply filters only when the filter form is submitted
         if ($request->ajax()) {
@@ -120,12 +127,14 @@ class ContactController extends Controller
             $validated['additional_file'] = $request->file('additional_file')->store('additional_files', 'public');
         }
 
+        $validated['user_id'] = Auth::id(); // Track who added the contact
+
         $contact = Contact::create($validated);
 
         // Save custom fields
         if ($request->custom_fields) {
             foreach ($request->custom_fields as $fieldId => $value) {
-                ContactCustomFieldValue::create([
+                \App\Models\ContactCustomFieldValue::create([
                     'contact_id' => $contact->id,
                     'custom_field_id' => $fieldId,
                     'value' => $value,
