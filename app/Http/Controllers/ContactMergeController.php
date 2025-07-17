@@ -91,4 +91,12 @@ class ContactMergeController extends Controller
 
         return response()->json(['success' => true, 'message' => 'Contacts merged successfully.']);
     }
+
+    public function mergeDetails($contactId)
+    {
+        $merge = \App\Models\ContactMerge::where('merged_contact_id', $contactId)->latest()->first();
+        if (!$merge) abort(404);
+        $merge->merged_data = json_decode($merge->merged_data, true);
+        return view('contacts.partials.merge_details_modal', compact('merge'))->render();
+    }
 }

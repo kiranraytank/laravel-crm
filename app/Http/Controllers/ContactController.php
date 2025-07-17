@@ -110,14 +110,28 @@ class ContactController extends Controller
 
     public function store(Request $request)
     {
+        // $validated = $request->validate([
+        //     'name' => 'required|string|max:255',
+        //     'email' => 'nullable|email',
+        //     'phone' => ['nullable', 'digits_between:7,15'],
+        //     // 'phone' => 'nullable|string|max:20',
+        //     'gender' => 'nullable|in:male,female,other',
+        //     'profile_image' => 'nullable|image|max:2048',
+        //     'additional_file' => 'nullable|file|max:4096',
+        // ]);
+        
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => ['required', 'regex:/^[a-zA-Z\s]+$/u', 'max:255'],
             'email' => 'nullable|email',
-            'phone' => 'nullable|string|max:20',
+            'phone' => ['nullable', 'regex:/^[0-9]{7,15}$/'],
             'gender' => 'nullable|in:male,female,other',
             'profile_image' => 'nullable|image|max:2048',
             'additional_file' => 'nullable|file|max:4096',
+        ], [
+            'phone.regex' => 'Phone number must be between 7 to 15 digits and contain only numbers.',
+            'name.regex' => 'Name can contain only letters and spaces.',
         ]);
+
 
         // Handle file uploads
         if ($request->hasFile('profile_image')) {
@@ -150,13 +164,19 @@ class ContactController extends Controller
 
     public function edit(Contact $contact)
     {
-        $customFields = CustomField::all();
+        if ($contact->user_id !== auth()->id()) {
+            abort(403, 'Unauthorized');
+        }
+        $customFields = \App\Models\CustomField::all();
         $customFieldValues = $contact->customFieldValues->pluck('value', 'custom_field_id');
         return view('contacts.edit', compact('contact', 'customFields', 'customFieldValues'));
     }
 
     public function update(Request $request, Contact $contact)
     {
+        if ($contact->user_id !== auth()->id()) {
+            abort(403, 'Unauthorized');
+        }
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'nullable|email',
@@ -168,11 +188,11 @@ class ContactController extends Controller
 
         // Handle file uploads
         if ($request->hasFile('profile_image')) {
-            if ($contact->profile_image) Storage::disk('public')->delete($contact->profile_image);
+            if ($contact->profile_image) \Illuminate\Support\Facades\Storage::disk('public')->delete($contact->profile_image);
             $validated['profile_image'] = $request->file('profile_image')->store('profile_images', 'public');
         }
         if ($request->hasFile('additional_file')) {
-            if ($contact->additional_file) Storage::disk('public')->delete($contact->additional_file);
+            if ($contact->additional_file) \Illuminate\Support\Facades\Storage::disk('public')->delete($contact->additional_file);
             $validated['additional_file'] = $request->file('additional_file')->store('additional_files', 'public');
         }
 
@@ -181,7 +201,7 @@ class ContactController extends Controller
         // Update custom fields
         if ($request->custom_fields) {
             foreach ($request->custom_fields as $fieldId => $value) {
-                ContactCustomFieldValue::updateOrCreate(
+                \App\Models\ContactCustomFieldValue::updateOrCreate(
                     ['contact_id' => $contact->id, 'custom_field_id' => $fieldId],
                     ['value' => $value]
                 );
@@ -196,6 +216,9 @@ class ContactController extends Controller
 
     public function destroy(Contact $contact)
     {
+        if ($contact->user_id !== auth()->id()) {
+            abort(403, 'Unauthorized');
+        }
         $contact->delete();
         return response()->json(['success' => true, 'message' => 'Contact deleted.']);
     }

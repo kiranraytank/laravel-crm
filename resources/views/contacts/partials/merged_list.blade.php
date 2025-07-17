@@ -36,3 +36,8 @@
         </tbody>
     </table>
 </div>
+<div class="modal fade" id="mergeDetailsModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content" id="mergeDetailsModalContent"></div>
+  </div>
+</div>

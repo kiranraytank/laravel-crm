@@ -27,6 +27,10 @@ $(document).on('submit', '#filterForm', function(e) {
 
 $(document).on('submit', '#addContactForm', function(e) {
     e.preventDefault();
+    $('#addContactForm .alert').remove(); 
+    $('#addContactForm input, #addContactForm select').removeClass('is-invalid');
+
+
     var formData = new FormData(this);
     $.ajax({
         // url: '{{ route("contacts.store") }}',
@@ -48,9 +52,47 @@ $(document).on('submit', '#addContactForm', function(e) {
             // alert(resp.message);
             showAlert('success', resp.message); // ✅ Success alert
         },
-        error: function(error) {
-            console.error(error);
+        error: function(xhr) {
+            if (xhr.status === 422) {
+                const errors = xhr.responseJSON.errors;
+                let errorHtml = '<ul class="mb-0">';
+                let firstErrorField = null;
+
+                // Remove previous error highlights
+                $('#addContactForm input, #addContactForm select').removeClass('is-invalid');
+
+                $.each(errors, function(key, messages) {
+                    const fieldName = key.replace(/\./g, '\\.'); // dot-notation fix
+                    const field = $(`[name="${fieldName}"]`);
+
+                    if (!firstErrorField) firstErrorField = field;
+
+                    field.addClass('is-invalid'); // Bootstrap red border
+                    errorHtml += `<li>${messages[0]}</li>`;
+                });
+
+                errorHtml += '</ul>';
+
+                const alertHtml = `
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        ${errorHtml}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>`;
+                
+                $('#addContactForm .modal-body').prepend(alertHtml);
+
+                // Scroll to first error field
+                if (firstErrorField && firstErrorField.length) {
+                    firstErrorField[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    firstErrorField.focus();
+                }
+            } else {
+                console.error("Unexpected error:", xhr);
+                showAlert('danger', 'An unexpected error occurred.');
+            }
         }
+
+
     });
 });
 
@@ -244,6 +286,16 @@ $(document).on('click', '#showMergedContactsBtn', function(e) {
     });
 });
 
+$(document).on('click', '.viewMergeDetailsBtn', function(e) {
+    e.preventDefault();
+    var contactId = $(this).data('id');
+    $.get('/contacts/merge-details/' + contactId, function(data) {
+        $('#mergeDetailsModalContent').html(data);
+        const modal = new bootstrap.Modal(document.getElementById('mergeDetailsModal'));
+        modal.show();
+    });
+});
+
 
 //  Reset the Filter and Reload Data
 $(document).on('click', '#resetFilterBtn', function () {
@@ -267,3 +319,91 @@ function showAlert(type, message) {
 setTimeout(() => {
     $('.alert').alert('close');
 }, 10000);
+
+// AJAX: Add Custom Field
+$(document).on('submit', '#addCustomFieldForm', function(e) {
+    e.preventDefault();
+    var form = $(this);
+    var formData = form.serialize();
+    form.find('input, select').removeClass('is-invalid');
+    $('#addCustomFieldErrors').empty();
+    $.post(form.attr('action'), formData)
+        .done(function() { location.reload(); })
+        .fail(function(xhr) {
+            if (xhr.status === 422) {
+                const errors = xhr.responseJSON.errors;
+                let errorHtml = '<ul class="mb-0">';
+                $.each(errors, function(key, messages) {
+                    form.find(`[name="${key}"]`).addClass('is-invalid');
+                    errorHtml += `<li>${messages[0]}</li>`;
+                });
+                errorHtml += '</ul>';
+                $('#addCustomFieldErrors').html(errorHtml);
+            }
+        });
+});
+// AJAX: Edit Custom Field (open modal)
+$(document).on('click', '.editCustomFieldBtn', function(e) {
+    e.preventDefault();
+    var id = $(this).data('id');
+    $.get('/custom-fields/' + id + '/edit', function(field) {
+        let modalHtml = `
+            <form id="editCustomFieldForm" data-id="${field.id}">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Custom Field</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="text" name="name" value="${field.name}" required class="form-control mb-2">
+                    <select name="type" class="form-control" required>
+                        <option value="text" ${field.type === 'text' ? 'selected' : ''}>Text</option>
+                        <option value="date" ${field.type === 'date' ? 'selected' : ''}>Date</option>
+                        <option value="number" ${field.type === 'number' ? 'selected' : ''}>Number</option>
+                    </select>
+                    <div id="editCustomFieldErrors" class="text-danger mt-2"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Update</button>
+                </div>
+            </form>
+        `;
+        $('#editCustomFieldModalContent').html(modalHtml);
+        const modal = new bootstrap.Modal(document.getElementById('editCustomFieldModal'));
+        modal.show();
+    });
+});
+// AJAX: Edit Custom Field (submit)
+$(document).on('submit', '#editCustomFieldForm', function(e) {
+    e.preventDefault();
+    var form = $(this);
+    var id = form.data('id');
+    var formData = form.serialize();
+    form.find('input, select').removeClass('is-invalid');
+    $('#editCustomFieldErrors').empty();
+    $.post('/custom-fields/' + id + '/update', formData)
+        .done(function() { location.reload(); })
+        .fail(function(xhr) {
+            if (xhr.status === 422) {
+                const errors = xhr.responseJSON.errors;
+                let errorHtml = '<ul class="mb-0">';
+                $.each(errors, function(key, messages) {
+                    form.find(`[name="${key}"]`).addClass('is-invalid');
+                    errorHtml += `<li>${messages[0]}</li>`;
+                });
+                errorHtml += '</ul>';
+                $('#editCustomFieldErrors').html(errorHtml);
+            }
+        });
+});
+// AJAX: Delete Custom Field
+$(document).on('submit', '.deleteCustomFieldForm', function(e) {
+    e.preventDefault();
+    if (!confirm('Delete this custom field?')) return;
+    var form = $(this);
+    $.ajax({
+        url: form.attr('action'),
+        method: 'POST',
+        data: form.serialize(),
+        success: function() { location.reload(); }
+    });
+});

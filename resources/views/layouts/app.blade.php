@@ -103,6 +103,11 @@
                                 </a>
 
                                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                                    @auth
+                                        <li>
+                                            <a class="dropdown-item" href="{{ route('custom_fields.index') }}">Manage Custom Fields</a>
+                                        </li>
+                                    @endauth
                                     <li>
                                         <a class="dropdown-item" href="{{ route('logout') }}"
                                         onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
